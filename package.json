@@ -15,5 +15,10 @@
   "devDependencies": {
     "playwright": "^1.65.0",
     "vite": "^8.3.6"
+  },
+  "overrides": {
+    "rpc-websockets": {
+      "uuid": "11.1.0"
+    }
   }
 }

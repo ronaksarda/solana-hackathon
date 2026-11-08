@@ -2,6 +2,8 @@
 
 **Put money on your word.** Stake SOL on a goal. Prove it with a photo. An AI referee decides. Keep your promise and get your SOL back. Break it, and your SOL goes to the friend you named. Every stake and every verdict lives on Solana.
 
+**Live demo: https://solana-hackathon-eight.vercel.app** (Solana devnet, Phantom wallet)
+
 Built for the [MLH Solana Hackathon](https://www.mlh.com/events/solana-hackathon). Tracks: AI, DeFi, Gaming. Demo plan: [docs/demo-script.md](docs/demo-script.md).
 
 ## Why
