@@ -30,7 +30,7 @@ Add your Gemini key to `.env.local`:
 
 ```
 GEMINI_API_KEY=your-key
-# optional: GEMINI_MODEL=gemini-2.5-flash, SOLANA_RPC=https://api.devnet.solana.com
+# optional: GEMINI_MODEL=gemini-flash-latest, SOLANA_RPC=https://api.devnet.solana.com
 ```
 
 Fund the escrow address with devnet SOL at https://faucet.solana.com (it pays payout fees), then:
