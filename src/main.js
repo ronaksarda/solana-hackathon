@@ -142,7 +142,9 @@ async function loadWall() {
       <div><b>${sol(toFriends)}</b>SOL to friends</div>`;
     $('#wall').innerHTML = items.length ? items.map((i) => card(i, now)).join('') : '<p class="note">No promises yet. Be the first.</p>';
   } catch (err) {
-    $('#wall').innerHTML = `<p class="note">Could not load wall: ${esc(err.message)}</p>`;
+    $('#wall').innerHTML = `<p class="note">Could not load wall: ${esc(err.message)}. Retrying…</p>`;
+    setTimeout(loadWall, 10_000); // public devnet RPC rate-limits bursts
+
   }
 }
 

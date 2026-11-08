@@ -46,8 +46,9 @@ input:focus, select:focus { outline: 2px solid var(--lime); outline-offset: -1px
 .btn.small { padding: 8px 12px; font-size: 12px; margin-top: 12px; }
 .btn.ghost { background: transparent; color: var(--red); border: 1px solid var(--red); }
 .note { color: var(--dim); font-size: 12px; }
-#toast { margin-top: 20px; min-height: 0; }
-#toast:not(:empty) { padding: 14px 16px; border-left: 4px solid var(--fg); background: var(--panel); }
+/* Floating, so the verdict stays visible while scrolled to the wall. */
+#toast { position: fixed; top: 16px; right: 16px; max-width: min(440px, calc(100vw - 32px)); z-index: 50; }
+#toast:not(:empty) { padding: 14px 16px; border-left: 4px solid var(--fg); background: var(--panel); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); }
 #toast.good { border-color: var(--lime); }
 #toast.bad { border-color: var(--red); }
 .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
