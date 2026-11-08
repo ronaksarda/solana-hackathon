@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Skin in the Game</title>
+  <meta name="description" content="Stake SOL on your goals. AI judges your proof. Break your word, your friend gets paid." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">SKIN<span>IN THE</span>GAME</div>
+    <button id="connect" class="btn">Connect Phantom</button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Put money<br />on your word.</h1>
+      <p>Stake SOL on a goal. Prove it with a photo. An AI referee decides.
+        Keep your promise, get your SOL back. Break it, your friend gets paid.
+        Every stake and verdict lives on Solana.</p>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="card" id="create">
+      <h2>Make a promise</h2>
+      <form id="goal-form">
+        <label>I will…
+          <input name="goal" maxlength="140" required placeholder="do 20 push-ups today" />
+        </label>
+        <div class="row">
+          <label>Stake (SOL)
+            <input name="amount" type="number" min="0.001" step="0.001" value="0.05" required />
+          </label>
+          <label>Deadline
+            <select name="minutes">
+              <option value="3">3 minutes (demo)</option>
+              <option value="60">1 hour</option>
+              <option value="1440" selected>1 day</option>
+              <option value="10080">1 week</option>
+            </select>
+          </label>
+        </div>
+        <label>If I fail, pay this friend (wallet address)
+          <input name="beneficiary" required placeholder="Friend's Solana address" spellcheck="false" />
+        </label>
+        <button class="btn big" id="stake" disabled>Connect wallet to stake</button>
+      </form>
+      <p class="note">Devnet only. Get free devnet SOL at <a href="https://faucet.solana.com" target="_blank" rel="noopener">faucet.solana.com</a>.</p>
+    </section>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <section>
+      <h2>Wall of fame &amp; shame</h2>
+      <div id="wall" class="wall"><p class="note">Loading from chain…</p></div>
+    </section>
+  </main>
+
+  <footer>Escrow: <a id="escrow" target="_blank" rel="noopener">…</a> · Solana devnet · AI referee: Gemini</footer>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
