@@ -146,14 +146,19 @@ async function loadWall() {
   }
 }
 
+// While the photo picker/camera is open, auto-refresh would replace the input and drop the photo.
+let picking = false;
 $('#wall').addEventListener('change', (e) => {
+  picking = false;
   const sig = e.target.dataset?.sig;
   if (sig && e.target.files[0]) settle(sig, e.target.files[0]);
 });
 $('#wall').addEventListener('click', (e) => {
+  if (e.target.closest('label')) picking = true;
   const sig = e.target.dataset?.settle;
   if (sig) settle(sig, null);
 });
+window.addEventListener('focus', () => setTimeout(() => { picking = false; }, 2000));
 
 loadWall();
-setInterval(loadWall, 30_000);
+setInterval(() => { if (!picking) loadWall(); }, 30_000);

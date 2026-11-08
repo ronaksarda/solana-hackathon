@@ -1,5 +1,5 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction, sendAndConfirmTransaction } from '@solana/web3.js';
-import { MEMO_PROGRAM, memoJson, readStake } from '../lib/core.js';
+import { MEMO_PROGRAM, decide, memoJson, readStake } from '../lib/core.js';
 import { conn, escrowKeypair, send, trustedHistory } from '../lib/chain.js';
 import { judgeProof } from '../lib/gemini.js';
 
@@ -16,7 +16,12 @@ export default async function handler(req, res) {
     const escrow = kp.publicKey.toBase58();
 
     // Facts come from the chain, never from the client.
-    const stake = readStake(await c.getParsedTransaction(sig, { maxSupportedTransactionVersion: 0 }), escrow);
+    let stake;
+    try {
+      stake = readStake(await c.getParsedTransaction(sig, { maxSupportedTransactionVersion: 0 }), escrow);
+    } catch (e) {
+      return send(res, 400, { error: e.message });
+    }
 
     const prior = (await trustedHistory(c, escrow, 1000)).find((s) => memoJson(s.memo)?.s === sig);
     if (prior) {
@@ -24,31 +29,26 @@ export default async function handler(req, res) {
       return send(res, 200, { settled: true, verdict: m.v, reason: m.r, payout: prior.signature });
     }
 
-    let verdict;
-    if (Date.now() / 1000 > stake.deadline) {
-      verdict = { pass: false, confidence: 1, reason: 'Deadline passed. Promise broken.' };
-    } else {
+    const now = Date.now() / 1000;
+    let verdict = { pass: false, confidence: 1, reason: 'Deadline passed. Promise broken.' };
+    if (now <= stake.deadline) {
       if (typeof image !== 'string' || image.length > 4_000_000) {
         return send(res, 400, { error: 'Photo required (max 3 MB)' });
       }
       if (!/^image\/(jpeg|png|webp)$/.test(mime)) return send(res, 400, { error: 'JPEG, PNG or WebP only' });
       verdict = await judgeProof(stake.goal, image, mime);
-      // A failed photo is not a forfeit: retry allowed until the deadline.
-      if (!verdict.pass) return send(res, 200, { settled: false, ...verdict });
     }
+    const d = decide(stake, now, verdict);
+    if (!d) return send(res, 200, { settled: false, ...verdict });
 
     // shortcut: two parallel requests could both pay before either lands; upgrade to an on-chain escrow program.
-    const memo = JSON.stringify({ s: sig, v: verdict.pass ? 'kept' : 'broken', r: verdict.reason });
+    const memo = JSON.stringify({ s: sig, v: d.v, r: verdict.reason });
     const tx = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: kp.publicKey,
-        toPubkey: new PublicKey(verdict.pass ? stake.staker : stake.beneficiary),
-        lamports: stake.lamports,
-      }),
+      SystemProgram.transfer({ fromPubkey: kp.publicKey, toPubkey: new PublicKey(d.to), lamports: stake.lamports }),
       new TransactionInstruction({ programId: new PublicKey(MEMO_PROGRAM), keys: [], data: Buffer.from(memo) }),
     );
     const payout = await sendAndConfirmTransaction(c, tx, [kp]);
-    send(res, 200, { settled: true, verdict: verdict.pass ? 'kept' : 'broken', ...verdict, payout });
+    send(res, 200, { ...verdict, settled: true, verdict: d.v, payout });
   } catch (e) {
     send(res, 500, { error: e.message });
   }
