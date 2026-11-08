@@ -1,35 +1,43 @@
-# SignSafe — MVP Plan
+# Skin in the Game — MVP Plan
 
-**Pitch:** Know what you sign. SignSafe explains any Solana transaction in plain English and flags wallet drainers before you approve it in Phantom.
+**Pitch:** Put money on your goals. Stake SOL on a promise ("gym 4x this week"). Prove it with a photo. AI judges the proof. Keep your word, get your SOL back. Break it, your SOL goes to the friend you named.
 
-**Why:** Wallet drainers trick users into "blind signing" — the wallet popup shows bytes, not intent. SignSafe puts a readable, risk-rated explanation in front of the user.
+**Why:** Commitment contracts work (loss aversion), but existing apps hold your money and judge you by hand. Here the stake, the verdict and the payout are all public on Solana, and an AI judge removes the human bottleneck.
 
-**Tracks:** AI (Gemini explains + parses intent), DeFi (safe transfers, token approvals), Top 3 Overall.
+**Tracks:** AI (Gemini vision judges proof), DeFi (escrow + stake + payout), Gaming (streaks, public wall of shame/fame), Top 3 Overall.
 
-## Features (MVP only)
+## Flow
 
-1. **Explain** — paste a transaction signature (devnet or mainnet) or a base64 unsigned transaction. App decodes the instructions with `@solana/web3.js`.
-2. **Rule flags** (deterministic, no AI): SPL `Approve` to unknown delegate, `SetAuthority`, `CloseAccount`, transfer of most of the balance, unknown program IDs. Gives a green / yellow / red score.
-3. **AI summary** — decoded instructions + flags go to Gemini; it returns a plain-English explanation.
-4. **Intent to transaction** — user types "send 0.1 SOL to <address>". Gemini returns JSON; app builds a devnet `SystemProgram.transfer`, runs it through Explain, then Phantom signs. Shows explorer link.
-5. **Demo drainer** — one button builds a malicious-looking sample transaction so judges see a red flag live.
+1. Connect Phantom (devnet).
+2. Create goal: text, deadline, stake amount, beneficiary wallet.
+3. Stake: Phantom signs one tx = `SystemProgram.transfer` to escrow wallet + Memo `{"g":goal,"d":deadline,"b":beneficiary}`.
+4. Prove: upload photo. `/api/judge` sends goal text + photo to Gemini vision; returns `{pass, reason, confidence}`.
+5. Settle (server, escrow key): pass = refund to staker; fail or past deadline = pay beneficiary. Settlement tx carries Memo `{"stake":<stake sig>,"verdict":...,"reason":...}`.
+6. Wall: list of goals and verdicts read from escrow wallet history, with explorer links.
+
+## Design choice: chain is the database
+
+No DB. A goal is its stake transaction. The server reads the stake tx from devnet to get amount, staker, goal, deadline and beneficiary, so the client cannot lie about them. Before settling, the server scans escrow history for a settlement memo with the same stake sig to block double payouts.
 
 ## Stack
 
-- Vite + vanilla JS, `@solana/web3.js`, `@solana/spl-token`.
-- Phantom through `window.phantom.solana` (no wallet-adapter).
-- One Vercel serverless function `api/explain.js` calls Gemini; key stays server-side in `GEMINI_API_KEY`.
-- Devnet for all signing.
+- Vite + vanilla JS, `@solana/web3.js`, Phantom via `window.phantom.solana`.
+- Vercel functions: `api/judge.js` (verify stake tx, Gemini vision, settle).
+- Env: `GEMINI_API_KEY`, `ESCROW_SECRET_KEY` (devnet only).
+
+## Shortcut (disclosed)
+
+Escrow is a server-held devnet keypair, not an on-chain program (no Rust toolchain, 8 hours). Upgrade path: Anchor escrow program with an oracle-signed verdict.
 
 ## Skipped
 
-Custom on-chain program, browser extension, multi-wallet support, accounts/login, history.
+Real escrow program, mainnet, accounts/login, cron for automatic deadline payouts (settle on next visit instead), multiple proofs per goal.
 
 ## Stages (one commit each)
 
 1. Scaffold Vite app + Vercel function stub
-2. Transaction decoder + rule flags (+ small test)
-3. Gemini explain route
-4. Intent to transaction + Phantom sign
-5. Demo drainer + UI polish
+2. Phantom connect + stake tx with Memo
+3. `api/judge`: verify stake tx on-chain + Gemini vision verdict
+4. Settlement payout + double-settle guard (+ small test)
+5. Wall of fame/shame + UI polish
 6. Deploy to Vercel, README, demo-video script
