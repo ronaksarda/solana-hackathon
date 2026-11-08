@@ -28,7 +28,13 @@
       <h2>Make a promise</h2>
       <form id="goal-form">
         <label>I will…
-          <input name="goal" maxlength="140" required placeholder="do 20 push-ups today" />
+          <span class="row-inline">
+            <input name="goal" maxlength="140" required placeholder="get fit" />
+            <button type="button" class="btn ghost-lime" id="sharpen">✦ Sharpen with AI</button>
+          </span>
+        </label>
+        <label>Proof photo will show
+          <input name="proof" maxlength="100" placeholder="AI fills this in, or write your own" />
         </label>
         <div class="row">
           <label>Stake (SOL)

@@ -8,6 +8,12 @@ Built for the [MLH Solana Hackathon](https://www.mlh.com/events/solana-hackathon
 
 Commitment contracts work: people try harder when losing money is on the line. But existing apps hold your money privately and judge your proof by hand. Skin in the Game makes the stake, the verdict and the payout public on Solana, and an AI referee removes the human bottleneck.
 
+## Where the AI works (Gemini)
+
+1. **AI coach.** Type a vague goal ("get fit"). Gemini rewrites it into one a single photo can prove ("Complete 5 push-ups in a row") and states what the proof photo must show. Both go on-chain in the stake memo, so the rules of the contract are fixed before money moves.
+2. **Anti-replay challenge code.** Each stake gets a 5-character code derived from its transaction signature, so nobody can know it before staking. The proof photo must show it (on paper or on screen). This kills stock photos and reused photos.
+3. **AI referee.** Gemini vision judges the photo against the on-chain goal, the proof rule and the code, and returns a verdict with a reason. The verdict moves real SOL and is written on-chain in the payout memo. It needs 70% confidence and a visible code to pass, ignores other text in the photo, and falls back to a second model when the first is overloaded.
+
 ## How it works
 
 1. **Stake.** You sign one transaction in Phantom: a SOL transfer to the escrow wallet plus a Memo instruction holding the goal, deadline and friend's address.

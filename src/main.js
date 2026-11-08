@@ -41,6 +41,25 @@ $('#connect').onclick = async () => {
   $('#stake').textContent = 'Stake it';
 };
 
+$('#sharpen').onclick = async () => {
+  const input = $('input[name=goal]');
+  if (!input.value.trim()) return toast('Type a goal first, even a vague one like “get fit”.', 'bad');
+  const btn = $('#sharpen');
+  btn.disabled = true;
+  btn.textContent = '✦ Thinking…';
+  try {
+    const r = await api('coach', { goal: input.value });
+    input.value = r.goal;
+    $('input[name=proof]').value = r.proof;
+    toast(`AI coach made it provable: “${esc(r.goal)}”. Proof: ${esc(r.proof)}`, 'good');
+  } catch (err) {
+    toast(`Coach error: ${esc(err.message)}`, 'bad');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✦ Sharpen with AI';
+  }
+};
+
 $('#goal-form').onsubmit = async (e) => {
   e.preventDefault();
   const f = new FormData(e.target);
@@ -49,7 +68,8 @@ $('#goal-form').onsubmit = async (e) => {
   if (beneficiary.equals(wallet)) return toast('Your friend cannot be you. Nice try.', 'bad');
   const lamports = Math.round(Number(f.get('amount')) * LAMPORTS_PER_SOL);
   const deadline = Math.floor(Date.now() / 1000) + Number(f.get('minutes')) * 60;
-  const memo = JSON.stringify({ g: f.get('goal').trim(), d: deadline, b: beneficiary.toBase58(), a: lamports });
+  const proof = f.get('proof').trim();
+  const memo = JSON.stringify({ g: f.get('goal').trim(), ...(proof && { p: proof }), d: deadline, b: beneficiary.toBase58(), a: lamports });
 
   try {
     $('#stake').disabled = true;
@@ -119,6 +139,8 @@ function card(it, now) {
     <div class="tag">${label}</div>
     <h3>“${esc(it.goal)}”</h3>
     <div class="meta">${sol(it.lamports)} SOL on the line · ${txLink(it.sig, 'stake')}${it.result ? ` · ${txLink(it.result.sig, 'verdict')}` : ''}</div>
+    ${it.proof ? `<p class="proof">Proof: ${esc(it.proof)}</p>` : ''}
+    ${status === 'live' ? `<p class="proof">Show this code in your photo: <span class="code">${esc(it.code)}</span></p>` : ''}
     ${it.result?.reason ? `<p class="reason">Referee: “${esc(it.result.reason)}”</p>` : ''}
     ${action}
   </article>`;

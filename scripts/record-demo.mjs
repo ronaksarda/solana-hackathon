@@ -1,6 +1,6 @@
 // Records the demo video against the local dev server with real devnet transactions.
 // A throwaway test wallet stands in for Phantom (browser extensions cannot be automated); the caption says so.
-// Usage: npm run dev, then: node --env-file=.env.local scripts/record-demo.mjs <fake-proof.jpg> <real-proof.jpg>
+// Usage: npm run dev, then: node --env-file=.env.local scripts/record-demo.mjs <fake-proof.jpg>
 import { chromium } from 'playwright';
 import {
   Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction,
@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 
 const BASE = 'http://localhost:5173';
 const FAKE_PROOF = process.argv[2]; // a photo that does not prove the goal
-const REAL_PROOF = process.argv[3]; // a screenshot of the running app
+const REAL_PROOF = 'demo/proof.png'; // captured during the recording
 const CHROME = process.env.CHROME_PATH; // optional: use an already installed Chromium
 const c = new Connection(clusterApiUrl('devnet'), 'confirmed');
 const escrow = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.ESCROW_SECRET_KEY)));
@@ -93,19 +93,27 @@ await caption('Connect a wallet. (For this recording a devnet test wallet signs 
 await page.click('#connect');
 await wait(3);
 await scrollTo('#goal-form');
-await caption('Make a promise: goal, stake, deadline, and the friend who gets paid if you fail.');
-await page.locator('input[name=goal]').pressSequentially('ship the Skin in the Game web app for the Solana hackathon', { delay: 25 });
+await caption('Make a promise. Start vague…');
+await page.locator('input[name=goal]').pressSequentially('make my first promise on Skin in the Game', { delay: 30 });
+await page.click('#sharpen');
+await caption('AI coach (Gemini) rewrites it into a goal a photo can prove, and says what the proof must show.');
+await waitToast(/AI coach|Coach error/);
+await wait(5);
+await caption('Stake, deadline, and the friend who gets paid if you fail.');
 await page.fill('input[name=amount]', '0.1');
 await page.selectOption('select[name=minutes]', '60');
 await page.locator('input[name=beneficiary]').pressSequentially(friend.publicKey.toBase58(), { delay: 8 });
 await wait(1);
 await page.click('#stake');
-await caption('One transaction: SOL goes to escrow, and a Memo writes the goal on Solana.');
+await caption('One transaction: SOL goes to escrow, and a Memo writes the goal and proof rule on Solana.');
 await waitToast(/Staked|failed/);
-await wait(4);
+await wait(3);
+await scrollTo('#wall');
+await page.locator('.goal.live .code').first().scrollIntoViewIfNeeded();
+await caption('Anti-cheat: a challenge code derived from the stake signature. The photo must show it, so no stock or reused photos.');
+await wait(6);
 
 // Fake proof
-await scrollTo('#wall');
 await caption('Now prove it. First, a fake proof: a stock wallpaper.');
 await wait(2);
 await page.locator('input[type=file]').first().setInputFiles(FAKE_PROOF);
@@ -113,8 +121,12 @@ await waitToast(/Rejected|kept|error/);
 await caption('Rejected, with a reason. A miss is not a forfeit: retry until the deadline.');
 await wait(6);
 
-// Real proof
-await caption('Now real proof: a screenshot of the shipped app.');
+// Real proof: a screenshot of the published promise with its challenge code, taken live.
+await caption('Now real proof: a screenshot of my published promise, challenge code included.');
+await page.locator('.goal.live').first().scrollIntoViewIfNeeded();
+await page.evaluate(() => { document.getElementById('__cap').style.visibility = 'hidden'; document.getElementById('toast').style.visibility = 'hidden'; });
+await page.screenshot({ path: REAL_PROOF });
+await page.evaluate(() => { document.getElementById('__cap').style.visibility = ''; document.getElementById('toast').style.visibility = ''; });
 await wait(2);
 for (let i = 0; i < 3; i++) {
   await page.locator('input[type=file]').first().setInputFiles(REAL_PROOF);

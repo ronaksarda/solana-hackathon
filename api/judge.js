@@ -1,5 +1,5 @@
 import { PublicKey, SystemProgram, Transaction, TransactionInstruction, sendAndConfirmTransaction } from '@solana/web3.js';
-import { MEMO_PROGRAM, decide, memoJson, readStake } from '../lib/core.js';
+import { MEMO_PROGRAM, challengeCode, decide, memoJson, readStake } from '../lib/core.js';
 import { conn, escrowKeypair, send, trustedHistory } from '../lib/chain.js';
 import { judgeProof } from '../lib/gemini.js';
 
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         return send(res, 400, { error: 'Photo required (max 3 MB)' });
       }
       if (!/^image\/(jpeg|png|webp)$/.test(mime)) return send(res, 400, { error: 'JPEG, PNG or WebP only' });
-      verdict = await judgeProof(stake.goal, image, mime);
+      verdict = await judgeProof({ goal: stake.goal, proof: stake.proof, code: challengeCode(sig) }, image, mime);
     }
     const d = decide(stake, now, verdict);
     if (!d) return send(res, 200, { settled: false, ...verdict });
